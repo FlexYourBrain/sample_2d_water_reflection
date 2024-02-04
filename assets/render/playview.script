@@ -1,0 +1,25 @@
+local z0 = 0 local z1 = 1.0 local playcam_url = "/playcam"
+
+local function start_scene()
+	go.animate("/bg#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 18)
+	go.animate("/cactus#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 25)
+	go.animate("/cattails#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 21)
+	go.animate("/clouds#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 26)
+	go.animate("/ground#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 20)
+	go.animate("/ground2#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 35)
+	go.animate("/ground3#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 40)
+	go.animate("/water#quad", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 10)
+	particlefx.play("/smoke#smoke")
+end
+
+function init(self)
+	--Calculate play view then send to render socket
+	local screen_pos = go.get_world_position(playcam_url)
+	local screen_rot = go.get_world_rotation(playcam_url)
+	local Ypositive = vmath.rotate(screen_rot , vmath.vector3(z0, z1, z0))
+	local screen_forward = screen_pos + vmath.rotate(screen_rot , vmath.vector3(z0, z0, -z1))
+	local view = vmath.matrix4_look_at(screen_pos, screen_forward, Ypositive)
+	msg.post("@render:", "set_play_view", { view = view })
+	--------------------------------------
+	start_scene()
+end

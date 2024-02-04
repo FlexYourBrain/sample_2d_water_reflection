@@ -1,0 +1,145 @@
+local function fixed_projection(near, far, zoom)
+    local projected_width = render.get_window_width() / (zoom or 1)
+    local projected_height = render.get_window_height() / (zoom or 1)
+    local xoffset = -(projected_width - render.get_width()) / 2
+    local yoffset = -(projected_height - render.get_height()) / 2
+    return vmath.matrix4_orthographic(xoffset, xoffset + projected_width, yoffset, yoffset + projected_height, near, far)
+end
+local function fixed_fit_projection(near, far)
+    local width = render.get_width()
+    local height = render.get_height()
+    local window_width = render.get_window_width()
+    local window_height = render.get_window_height()
+    local zoom = math.min(window_width / width, window_height / height)
+    return fixed_projection(near, far, zoom)
+end
+local function stretch_projection(near, far)
+    return vmath.matrix4_orthographic(0, render.get_width(), 0, render.get_height(), near, far)
+end
+local function get_projection(self)
+    return self.projection_fn(self.near, self.far, self.zoom)
+end
+
+-- Create/Refresh render target buffer
+local function post_builder(self,refresh)
+    if refresh then
+        render.delete_render_target(self.postprocess)
+    end
+    local rgba_params = {format = render.FORMAT_RGBA, width = render.get_window_width(), height = 375, u_wrap = render.WRAP_REPEAT, v_wrap = render.WRAP_CLAMP_TO_EDGE}
+    local target_params = {[render.BUFFER_COLOR_BIT] = rgba_params}
+    return render.render_target("water",target_params)
+end
+
+function init(self)
+    self.tile_pred = render.predicate({"tile"})
+    self.gui_pred = render.predicate({"gui"})
+    self.particle_pred = render.predicate({"particle"})
+    self.postprocess_pred = render.predicate({"water"}) -- Create a predicate for the water effect
+
+    self.clear_color = vmath.vector4(0, 0, 0, 0)
+    self.clear_color.x = sys.get_config("render.clear_color_red", 0)
+    self.clear_color.y = sys.get_config("render.clear_color_green", 0)
+    self.clear_color.z = sys.get_config("render.clear_color_blue", 0)
+    self.clear_color.w = sys.get_config("render.clear_color_alpha", 0)
+
+    self.view = vmath.matrix4()
+    self.near = -1
+    self.far = 1
+    self.projection_fn = stretch_projection
+
+
+    --post process initialize
+    self.play_view  = nil
+    self.pp_On = true -- boolean to turn effect on or off
+    self.postprocess = post_builder(self,false)
+
+end
+local function render_pp(self) -- Render post process water effect
+    render.enable_texture(0, self.postprocess, render.BUFFER_COLOR_BIT)
+    render.draw(self.postprocess_pred)
+    render.disable_texture(0, self.postprocess)
+end
+function update(self)
+    local window_width = render.get_window_width()
+    local window_height = render.get_window_height()
+    if window_width == 0 or window_height == 0 then
+        return
+    end
+    
+    local proj = get_projection(self)
+    local frustum_component = proj * self.view
+    
+    render.set_depth_mask(true)
+    render.set_stencil_mask(0xff)
+    render.clear({[render.BUFFER_COLOR_BIT] = self.clear_color, [render.BUFFER_DEPTH_BIT] = 1, [render.BUFFER_STENCIL_BIT] = 0})
+    render.set_depth_mask(false)
+
+    render.set_viewport(0, 0, window_width, window_height)
+    render.set_view(self.view)
+    render.set_projection(proj)
+
+    if self.pp_On then -- begin rendertarget pass
+        render.enable_render_target(self.postprocess)
+        render.set_view(self.play_view) -- set the view to playview while drawing to rendertarget
+        -- Draw sprites, tiles and particles to rendertarget
+        render.enable_state(render.STATE_BLEND)
+        render.draw(self.tile_pred, {frustum = frustum_component})
+        render.draw(self.particle_pred, {frustum = frustum_component})
+        render.disable_state(render.STATE_BLEND)
+
+        render.disable_render_target(self.postprocess)
+        render.set_view(self.view) -- set the view back to normal game view
+        render_pp(self) -- now draw the water effect
+    end
+
+    -- Sprites etc
+    render.set_blend_func(render.BLEND_SRC_ALPHA, render.BLEND_ONE_MINUS_SRC_ALPHA)
+    render.enable_state(render.STATE_BLEND)
+    render.enable_state(render.STATE_STENCIL_TEST)
+    render.draw(self.tile_pred, {frustum = frustum_component})
+    render.draw(self.particle_pred, {frustum = frustum_component})
+    render.disable_state(render.STATE_STENCIL_TEST)
+    render.disable_state(render.STATE_BLEND)
+
+    -- Debug Draw
+    render.draw_debug3d()
+
+    -- GUI
+    local view_gui = vmath.matrix4()
+    local proj_gui = vmath.matrix4_orthographic(0, window_width, 0, window_height, -1, 1)
+    local frustum_gui = proj_gui * view_gui
+    render.set_view(view_gui)
+    render.set_projection(proj_gui)
+
+    render.enable_state(render.STATE_STENCIL_TEST)
+    render.draw(self.gui_pred, {frustum = frustum_gui})
+    render.disable_state(render.STATE_STENCIL_TEST)
+end
+
+function on_message(self, message_id, message)
+    if message_id == hash("clear_color") then
+        self.clear_color = message.color
+    elseif message_id == hash("set_view_projection") then
+        self.view = message.view
+        self.projection = message.projection
+    elseif message_id == hash("window_resized") then
+        self.postprocess = post_builder(self,true)
+    elseif message_id == hash("set_play_view") then
+        self.play_view  = message.view
+    elseif message_id == hash("use_camera_projection") then
+        self.projection_fn = function() return self.projection or vmath.matrix4() end
+    elseif message_id == hash("use_stretch_projection") then
+        self.near = message.near or -1
+        self.far = message.far or 1
+        self.projection_fn = stretch_projection
+    elseif message_id == hash("use_fixed_projection") then
+        self.near = message.near or -1
+        self.far = message.far or 1
+        self.zoom = message.zoom or 1
+        self.projection_fn = fixed_projection
+    elseif message_id == hash("use_fixed_fit_projection") then
+        self.near = message.near or -1
+        self.far = message.far or 1
+        self.projection_fn = fixed_fit_projection
+    end
+end
