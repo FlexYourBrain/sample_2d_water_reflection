@@ -1,5 +1,7 @@
 # Water reflection effect
 
+[Play the Demo](https://flexyourbrain.itch.io/water-effect)
+
 This project showcases a 2d reflective water effect in the defold game engine.
 
 what's needed to create this effect?
