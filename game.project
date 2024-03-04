@@ -16,6 +16,6 @@ input_method = HiddenInputField
 title = sample_2d_water_effect
 
 [graphics]
-default_texture_min_filter = nearest
-default_texture_mag_filter = nearest
+default_texture_min_filter = linear
+default_texture_mag_filter = linear
 

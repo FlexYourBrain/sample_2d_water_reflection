@@ -83,6 +83,10 @@ embedded_instances {
   "    sampler: \\\"dismap\\\"\\n"
   "    texture: \\\"/assets/textures/water_displace2.png\\\"\\n"
   "  }\\n"
+  "  textures {\\n"
+  "    sampler: \\\"water\\\"\\n"
+  "    texture: \\\"/builtins/graphics/particle_blob.png\\\"\\n"
+  "  }\\n"
   "}\\n"
   "\"\n"
   "  position {\n"
@@ -198,7 +202,7 @@ embedded_instances {
   ""
   position {
     x: 480.0
-    y: 306.0
+    y: 307.0
     z: 0.0
   }
   rotation {
@@ -366,10 +370,13 @@ embedded_instances {
   data: "embedded_components {\n"
   "  id: \"sprite\"\n"
   "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/assets/textures/images.atlas\\\"\\n"
-  "default_animation: \\\"cowboy\\\"\\n"
+  "  data: \"default_animation: \\\"cowboy\\\"\\n"
   "material: \\\"/builtins/materials/sprite.material\\\"\\n"
   "blend_mode: BLEND_MODE_ALPHA\\n"
+  "textures {\\n"
+  "  sampler: \\\"texture_sampler\\\"\\n"
+  "  texture: \\\"/assets/textures/images.atlas\\\"\\n"
+  "}\\n"
   "\"\n"
   "  position {\n"
   "    x: 0.0\n"

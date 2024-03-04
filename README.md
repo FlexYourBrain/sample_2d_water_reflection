@@ -24,3 +24,4 @@ Check out [the documentation pages](https://defold.com/learn) for examples, tuto
 Need help? ask questions in [The forum](https://forum.defold.com) and/or join the defold discord server.
 
 ---
+<sup><sub>Art Credit : Agustin R.</sub></sup>

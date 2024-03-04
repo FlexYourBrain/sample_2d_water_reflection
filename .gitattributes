@@ -40,3 +40,6 @@
 *.render_script linguist-language=Lua
 *.script linguist-language=Lua
 *.gui_script linguist-language=Lua
+
+#Line ending
+* text eol=lf

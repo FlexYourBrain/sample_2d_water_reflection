@@ -1,4 +1,7 @@
-local z0 = 0 local z1 = 1.0 local playcam_url = "/playcam"
+local z0 = 0 
+local z1 = 1.0 
+local URL_PLAYCAM = hash("/playcam")
+local SET_PLAY_VIEW = hash("set_play_view")
 
 local function start_scene()
 	go.animate("/bg#model", "time.x", go.PLAYBACK_LOOP_FORWARD, z1, go.EASING_LINEAR, 18)
@@ -13,13 +16,14 @@ local function start_scene()
 end
 
 function init(self)
+	msg.post("@render:", "use_stretch_projection", { near = -z1, far = z1 })
 	--Calculate play view then send to render socket
-	local screen_pos = go.get_world_position(playcam_url)
-	local screen_rot = go.get_world_rotation(playcam_url)
+	local screen_pos = go.get_world_position(URL_PLAYCAM)
+	local screen_rot = go.get_world_rotation(URL_PLAYCAM)
 	local Ypositive = vmath.rotate(screen_rot , vmath.vector3(z0, z1, z0))
 	local screen_forward = screen_pos + vmath.rotate(screen_rot , vmath.vector3(z0, z0, -z1))
 	local view = vmath.matrix4_look_at(screen_pos, screen_forward, Ypositive)
-	msg.post("@render:", "set_play_view", { view = view })
+	msg.post("@render:", SET_PLAY_VIEW, { view = view })
 	--------------------------------------
 	start_scene()
 end
