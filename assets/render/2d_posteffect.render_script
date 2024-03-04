@@ -38,7 +38,7 @@ local function post_builder(self,create_rt) -- create / resize render target
     local rt_height = 375
     
     if create_rt then
-        local rgba_params = {format = render.FORMAT_RGBA, width = window_width, height = rt_height, u_wrap = render.WRAP_REPEAT, v_wrap = render.WRAP_CLAMP_TO_EDGE}
+        local rgba_params = {format = render.FORMAT_RGBA16F, width = window_width, height = rt_height, u_wrap = render.WRAP_REPEAT, v_wrap = render.WRAP_CLAMP_TO_EDGE}
         local target_params = {[render.BUFFER_COLOR_BIT] = rgba_params}
         return render.render_target("water",target_params)
     else
