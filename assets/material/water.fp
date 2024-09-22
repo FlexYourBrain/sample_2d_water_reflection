@@ -1,8 +1,10 @@
-varying mediump vec2 var_texcoord0;
-varying mediump vec2 var_texcoord1; // scrollable offset UV's
 
-uniform lowp sampler2D water; // render target texture
-uniform lowp sampler2D dismap; // displacement map
+in vec2 var_texcoord0;
+in vec2 var_texcoord1; // scrollable offset UV's
+out vec4 color_out;
+
+uniform sampler2D water; // render target texture
+uniform sampler2D dismap; // displacement map
 
 void main()
 {
@@ -11,5 +13,5 @@ void main()
     vec2 offset = var_texcoord0.xy + (dismapp.rg - .5);
     vec4 final_color = texture(water, offset.xy) - damp_color;
 
-    gl_FragColor = vec4(final_color);
+    color_out = vec4(final_color);
 }
